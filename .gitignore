@@ -1,0 +1,4 @@
+*.dd
+www/bernardg.sql
+www/bernardg_com_update.sql.gz
+*.sql
