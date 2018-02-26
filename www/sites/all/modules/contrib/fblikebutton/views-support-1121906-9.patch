@@ -1,0 +1,99 @@
+diff --git a/fblikebutton.info b/fblikebutton.info
+index b9b5565..4484f8c 100644
+--- a/fblikebutton.info
++++ b/fblikebutton.info
+@@ -1,5 +1,6 @@
+-; $Id$
+ name = Facebook Like Button
+ description = Adds a configurable <em>Like</em> button for Facebook to each selected node type, as well as a configurable block with a <em>Like</em> box in it.
+ core = 7.x
+ configure = admin/config/fblikebutton
++
++files[] = views/fblikebutton_handler_field_fblikebutton.inc
+diff --git a/fblikebutton.module b/fblikebutton.module
+index 0992cb4..a9c4567 100644
+--- a/fblikebutton.module
++++ b/fblikebutton.module
+@@ -272,3 +272,13 @@ function _fblikebutton_field($webpage_to_like, $conf) {
+   $output = '<iframe src="https://www.facebook.com/plugins/like.php?' . $src . '" scrolling="no" frameborder="0" style="border: none; overflow: hidden; width: ' . $width . 'px; height: ' . $height . 'px;' . $other_css . '" allowTransparency="true"></iframe>';
+   return $output;
+ }
++
++/**
++ * Implements hook_views_api().
++ */
++function fblikebutton_views_api() {
++  return array(
++    'api' => 3,
++    'path' => drupal_get_path('module', 'fblikebutton') . '/views',
++  );
++}
+diff --git a/views/fblikebutton.views.inc b/views/fblikebutton.views.inc
+new file mode 100644
+index 0000000..bc4256f
+--- /dev/null
++++ b/views/fblikebutton.views.inc
+@@ -0,0 +1,16 @@
++<?php
++
++/**
++ * Implements hook_views_data().
++ */
++function fblikebutton_views_data() {
++  $data['node']['fblikebutton'] = array(
++    'field' => array(
++      'title' => t('Facebook Like Button'),
++      'help' => t('Adds a facebook like button.'),
++      'handler' => 'fblikebutton_handler_field_fblikebutton',
++    ),
++  );
++  
++  return $data;
++}
+diff --git a/views/fblikebutton_handler_field_fblikebutton.inc b/views/fblikebutton_handler_field_fblikebutton.inc
+new file mode 100644
+index 0000000..3101e4f
+--- /dev/null
++++ b/views/fblikebutton_handler_field_fblikebutton.inc
+@@ -0,0 +1,40 @@
++<?php
++
++class fblikebutton_handler_field_fblikebutton extends views_handler_field {
++  function construct() {
++    parent::construct();
++    $this->additional_fields['type'] = 'type';
++  }
++  
++  function query() {
++    $this->ensure_my_table();
++    $this->add_additional_fields();
++  }
++
++  function render($values) {
++    $output = NULL;
++    $nid = $values->nid;
++    $types = variable_get('fblikebutton_node_types', array());
++    $show = (!empty($types[$values->node_type]) && user_access('access fblikebutton'));
++    
++    $conf = array(
++      'layout' => variable_get('fblikebutton_layout', 'standard'),
++      'action' => variable_get('fblikebutton_action', 'like'),
++      'color_scheme' => variable_get('fblikebutton_color_scheme', 'light'),
++      'show_faces' => variable_get('fblikebutton_show_faces', 'true'),
++      'font' => variable_get('fblikebutton_font', 'arial'),
++      'height' => variable_get('fblikebutton_iframe_height', '80'),
++      'width' => variable_get('fblikebutton_iframe_width', '450'),
++      'send' => variable_get('fblikebutton_send', 'true'),
++      'other_css' => variable_get('fblikebutton_iframe_css', ''),
++      'language' => variable_get('fblikebutton_language', 'en_US'),
++    );
++    $webpage_to_like = url("node/$nid", array('absolute' => TRUE));
++    
++    if ($show) {
++      $output = _fblikebutton_field($webpage_to_like, $conf);
++    }
++    
++    return $output;
++  }
++}
+\ No newline at end of file
